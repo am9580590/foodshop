@@ -1,0 +1,268 @@
+{
+    "categories": [
+        {
+            "id": "pashteti",
+            "name": "Паштети"
+        },
+        {
+            "id": "zakuski",
+            "name": "Закуски"
+        },
+        {
+            "id": "salaty",
+            "name": "Салати"
+        },
+        {
+            "id": "supy",
+            "name": "Супи"
+        },
+        {
+            "id": "deserty",
+            "name": "Десерти"
+        },
+        {
+            "id": "napitki",
+            "name": "Напої"
+        }
+    ],
+    "menu": [
+        {
+            "id": "48291",
+            "category": "pashteti",
+            "name": "Паштет з курячої печінки",
+            "price": "139",
+            "images": "pashtet_1.jpg",
+            "weight": "150",
+            "unit": "г",
+            "links": "",
+            "vote": "25",
+            "description": "Ніжний паштет з курячої печінки з вершковим смаком, подається з тостами.",
+            "recommended": true,
+            "step": 1
+        },
+        {
+            "id": "19583",
+            "category": "pashteti",
+            "name": "Паштет із печінки качки",
+            "price": "179",
+            "images": "pashtet_2.jpg",
+            "weight": "140",
+            "unit": "г",
+            "links": "",
+            "vote": "0",
+            "description": "Делікатний паштет із печінки качки, вишуканий смак для справжніх гурманів.",
+            "recommended": false,
+            "step": 1
+        },
+        {
+            "id": "37925",
+            "category": "zakuski",
+            "name": "Оселедець під шубою",
+            "price": "120",
+            "images": "shuba.jpg",
+            "weight": "200",
+            "unit": "г",
+            "links": "",
+            "vote": "0",
+            "description": "Класична страва з оселедцем, овочами та ніжним соусом.",
+            "recommended": true,
+            "step": 2
+        },
+        {
+            "id": "58214",
+            "category": "zakuski",
+            "name": "Мариновані гриби",
+            "price": "100",
+            "images": "m_gribi.jpg",
+            "weight": "180",
+            "unit": "г",
+            "links": "",
+            "vote": "0",
+            "description": "Добірні лісові гриби в ароматному маринаді.",
+            "recommended": false,
+            "step": 2
+        },
+        {
+            "id": "92637",
+            "category": "salaty",
+            "name": "Олів’є класичний",
+            "price": "110",
+            "images": "olivie.jpg",
+            "weight": "250",
+            "unit": "г",
+            "links": "",
+            "vote": "0",
+            "description": "Традиційний салат з картоплею, ковбасою та майонезом.",
+            "recommended": true,
+            "step": 3
+        },
+        {
+            "id": "41852",
+            "category": "salaty",
+            "name": "Цезар з куркою",
+            "price": "135",
+            "images": "mimoza.jpg",
+            "weight": "220",
+            "unit": "г",
+            "links": "",
+            "vote": "0",
+            "description": "Легкий салат з куркою, сухариками та соусом Цезар.",
+            "recommended": false,
+            "step": 3
+        },
+        {
+            "id": "73915",
+            "category": "supy",
+            "name": "Борщ український",
+            "price": "95",
+            "images": "borsh.jpg",
+            "weight": "350",
+            "unit": "г",
+            "links": "",
+            "vote": "0",
+            "description": "Ситний борщ з м’ясом та сметаною, за класичним рецептом.",
+            "recommended": true,
+            "step": 4
+        },
+        {
+            "id": "58426",
+            "category": "supy",
+            "name": "Крем-суп з грибів",
+            "price": "105",
+            "images": "grib_sup.jpg",
+            "weight": "300",
+            "unit": "г",
+            "links": "",
+            "vote": "0",
+            "description": "Ніжний грибний суп-пюре зі спеціями та вершками.",
+            "recommended": false,
+            "step": 4
+        },
+        {
+            "id": "19384",
+            "category": "deserty",
+            "name": "Чізкейк класичний",
+            "price": "150",
+            "images": "chiz.jpg",
+            "weight": "120",
+            "unit": "г",
+            "links": "",
+            "vote": "0",
+            "description": "Кремовий чізкейк на хрусткій основі.",
+            "recommended": true,
+            "step": 5
+        },
+        {
+            "id": "67258",
+            "category": "deserty",
+            "name": "Медовик",
+            "price": "140",
+            "images": "medovik.jpg",
+            "weight": "130",
+            "unit": "г",
+            "links": "",
+            "vote": "0",
+            "description": "Домашній медовик з ніжним кремом.",
+            "recommended": false,
+            "step": 5
+        },
+        {
+            "id": "29581",
+            "category": "napitki",
+            "name": "Компот домашній",
+            "price": "80",
+            "images": "kompot.jpg",
+            "weight": "300",
+            "unit": "мл",
+            "links": "",
+            "vote": "0",
+            "description": "Солодкий напій зі свіжих фруктів та ягід.",
+            "recommended": true,
+            "step": 6
+        },
+        {
+            "id": "81473",
+            "category": "napitki",
+            "name": "Морс журавлиновий",
+            "price": "85",
+            "images": "mors.jpg",
+            "weight": "300",
+            "unit": "мл",
+            "links": "",
+            "vote": "0",
+            "description": "Корисний журавлиновий морс з яскравим смаком.",
+            "recommended": false,
+            "step": 6
+        }
+    ],
+    "setCategories": [
+        {
+            "id": "lunch",
+            "name": "Обідні сети"
+        },
+        {
+            "id": "picnic",
+            "name": "На пікнік"
+        },
+        {
+            "id": "week",
+            "name": "Сет тижня"
+        }
+    ],
+    "sets": [
+        {
+            "id": "s001",
+            "category": "lunch",
+            "name": "Обідній набір",
+            "price": "270",
+            "images": "set_obid.jpg",
+            "items": [
+                "73915",
+                "92637",
+                "29581"
+            ],
+            "weight": "900",
+            "unit": "г+мл",
+            "vote": "10",
+            "description": "Ситний обід: борщ, салат Олів’є та домашній компот.",
+            "recommended": true,
+            "step": ""
+        },
+        {
+            "id": "s002",
+            "category": "week",
+            "name": "Десертний сет (тижня)",
+            "price": "360",
+            "images": "set_desert.jpg",
+            "items": [
+                "19384",
+                "67258",
+                "81473"
+            ],
+            "weight": "550",
+            "unit": "г+мл",
+            "vote": "0",
+            "description": "Солодке поєднання: чізкейк, медовик та журавлиновий морс.",
+            "recommended": true,
+            "step": ""
+        },
+        {
+            "id": "s003",
+            "category": "picnic",
+            "name": "Закусочний сет (на пікнік)",
+            "price": "340",
+            "images": "set_zakuski.jpg",
+            "items": [
+                "48291",
+                "58214",
+                "29581"
+            ],
+            "weight": "630",
+            "unit": "г+мл",
+            "vote": "0",
+            "description": "Закусочний набір: паштет, мариновані гриби та компот.",
+            "recommended": false,
+            "step": ""
+        }
+    ]
+}

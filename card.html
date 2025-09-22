@@ -1,0 +1,15 @@
+<div class="w3-row item w3-padding" onclick="openProductModal('{IMAGE}', '{NAME}', '{PRICE}', '{WEIGHT}')">
+  <div class="w3-col scrollIntoView" style="width:50%">
+    <img src="images/{IMAGE}" alt="{NAME}" style="width:100%;max-width:200px;">
+  </div>
+  <div class="w3-container w3-col" style="width:50%">
+    <div>
+      <strong>{NAME}</strong><br>
+      Цена: {PRICE} грн | Вес: {WEIGHT} г
+    </div>
+    <div class="like-container">
+      <i class="far fa-heart like-btn"></i>
+      <span class="vote-count">{VOTE}</span>
+    </div>
+  </div>
+</div>
