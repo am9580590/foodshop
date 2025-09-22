@@ -101,6 +101,38 @@
 </div>
 
 <script>
+
+//swiper js
+let startX = 0;
+let currentIndex = 0; // индекс текущей вкладки
+
+const tabs = ["menu", "favorites", "cart"]; 
+
+function activateTab(index) {
+  currentIndex = index;
+  document.querySelectorAll("#topNav a").forEach((a,i)=>{
+    a.classList.toggle("active", i===index);
+  });
+  if (tabs[index]==="menu") showMenu();
+  if (tabs[index]==="favorites") showFavorites();
+  if (tabs[index]==="cart") showCart();
+}
+
+document.addEventListener("touchstart", e => {
+  startX = e.touches[0].clientX;
+});
+document.addEventListener("touchend", e => {
+  let dx = e.changedTouches[0].clientX - startX;
+  if (Math.abs(dx) > 50) { // свайп
+    if (dx < 0 && currentIndex < tabs.length-1) { 
+      activateTab(currentIndex+1); 
+    }
+    if (dx > 0 && currentIndex > 0) { 
+      activateTab(currentIndex-1); 
+    }
+  }
+});
+
 let menuData=null, cardTemplate='', sections=[], navLinks=[];
 let favorites=new Set(), cart=[], currentProduct=null, quantity=1;
 
