@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
+<title>Магазин с корзиной и избранным</title>
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+  body { margin:0; font-family:Arial,sans-serif; scroll-behavior:smooth; }
+  .top-nav {position:fixed;top:0;left:0;right:0;background:white;z-index:9998;padding:2px;white-space:nowrap;}
+  .top-nav a {display:inline-block;padding:14px 16px;text-decoration:none;color:black;}
+  .top-nav a.active {border:1px solid maroon;border-radius:30px;color:maroon;font-weight:600;}
+  .count-badge {background:maroon;color:white;border-radius:50%;padding:2px 7px;font-size:12px;margin-left:5px;vertical-align:middle;font-weight:600;}
+
+  .category-nav {position:fixed;bottom:0;left:0;right:0;background:white;overflow-x:auto;white-space:nowrap;border-top:1px solid #ccc;}
+  .category-nav a {display:inline-block;padding:14px 16px;text-decoration:none;color:black;transition:0.3s;}
+  .category-nav a.active {background:maroon;color:white;border-radius:30px;font-weight:600;}
+
+  .content {padding:60px 0 60px 0;}
+  .section {padding:20px;margin-bottom:40px;border-bottom:1px solid #ccc;}
+
+  .w3-modal-content {position:fixed;bottom:0;left:0;right:0;max-width:400px;margin:auto;}
+  .square-image {width:100%;height:300px;overflow:hidden;}
+  .square-image img {width:100%;height:100%;object-fit:cover;}
+
+  .like-container {cursor:pointer;display:flex;align-items:center;gap:4px;}
+  .like-btn {color:red;font-size:20px;}
+
+  /* Нижняя панель "Итого + Купить" только на странице корзины */
+  .fixed-buy {position:fixed;left:0;right:0;bottom:0;background:#fff;box-shadow:0 -2px 6px rgba(0,0,0,.1);padding:10px 16px;z-index:9997;}
+  .fixed-buy .sum {font-weight:700;margin:0 0 8px;}
+</style>
+</head>
+<body>
+
+<!-- Верхнее меню -->
+<div id="topNav" class="top-nav">
+  <a href="#menu" class="active">Меню</a>
+  <a href="#favorites">Избранное <span id="favCount" class="count-badge" style="display:none"></span></a>
+  <a href="#cart">Корзина <span id="cartCount" class="count-badge" style="display:none"></span></a>
+</div>
+
+<!-- Нижнее меню категорий -->
+<div id="categoryNav" class="category-nav"></div>
+
+<!-- Контент -->
+<div class="content" id="content"></div>
+
+<!-- Модальное окно товара -->
+<div id="productModal" class="w3-modal">
+  <div class="w3-modal-content w3-animate-bottom">
+    <header class="square-image">
+      <span onclick="closeModal()" class="w3-button w3-display-topright">&times;</span>
+      <img id="modalImage" src="" alt="">
+    </header>
+    <div class="w3-container" style="padding-bottom:20px;">
+      <h3 id="modalName"></h3>
+      <div style="display:flex;justify-content:space-between;">
+        <p id="modalPrice"></p><p id="modalWeight"></p>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:15px;">
+        <div>
+          <button id="qtyMinus" class="w3-button w3-black w3-round">-</button>
+          <span id="qtyValue">1</span>
+          <button id="qtyPlus" class="w3-button w3-black w3-round">+</button>
+        </div>
+        <p id="totalPrice" style="font-weight:bold;">0 грн</p>
+        <button class="w3-button w3-green" onclick="addToCart()">В корзину</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно оформления заказа -->
+<div id="orderModal" class="w3-modal">
+  <div class="w3-modal-content w3-animate-bottom">
+    <header class="w3-container w3-teal">
+      <span onclick="document.getElementById('orderModal').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+      <h3>Оформление заказа</h3>
+    </header>
+    <div class="w3-container" style="padding-bottom:20px;">
+      <form id="orderForm" method="post" action="order.php">
+        <p>Сумма заказа: <strong id="orderTotal"></strong> грн</p>
+        <input type="hidden" name="total" id="formTotal">
+        <p><input class="w3-input" type="text" name="name" placeholder="Ваше имя" required></p>
+        <p><input class="w3-input" type="tel" name="phone" placeholder="Телефон" required></p>
+        <p>
+          <select class="w3-select" name="delivery" required>
+            <option value="" disabled selected>Выберите доставку</option>
+            <option value="Самовывоз">Самовывоз</option>
+            <option value="Адресная доставка">Адресная доставка</option>
+          </select>
+        </p>
+        <p><textarea class="w3-input" name="comment" placeholder="Комментарий к заказу"></textarea></p>
+        <input type="hidden" name="cart" id="formCart">
+        <button class="w3-button w3-green" type="submit" style="width:100%">Отправить заказ</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+let menuData=null, cardTemplate='', sections=[], navLinks=[];
+let favorites=new Set(), cart=[], currentProduct=null, quantity=1;
+
+// === localStorage ===
+function loadState(){
+  favorites=new Set(JSON.parse(localStorage.getItem("favorites")||"[]"));
+  cart=JSON.parse(localStorage.getItem("cart")||"[]");
+}
+function saveState(){
+  localStorage.setItem("favorites",JSON.stringify([...favorites]));
+  localStorage.setItem("cart",JSON.stringify(cart));
+}
+
+// === counts ===
+function updateFavCount(){
+  const el=document.getElementById("favCount");
+  if(favorites.size){ el.style.display="inline-block"; el.textContent=favorites.size; }
+  else el.style.display="none";
+}
+function updateCartCount(){
+  const el=document.getElementById("cartCount");
+  if(cart.length){ el.style.display="inline-block"; el.textContent=cart.length; }
+  else el.style.display="none";
+}
+
+// === карточка товара с сердцем ===
+function renderCard(item){
+  const baseVotes = Number(item.vote || 0);
+
+  let html = cardTemplate
+    .replace(/{IMAGE}/g, item.images)
+    .replace(/{NAME}/g, item.name)
+    .replace(/{PRICE}/g, item.price)
+    .replace(/{WEIGHT}/g, item.weight)
+    .replace(/{VOTE}/g, baseVotes);
+
+  const wrap = document.createElement("div");
+  wrap.innerHTML = html;
+  const card = wrap.firstElementChild;
+
+  // --- лайк ---
+  const like = card.querySelector(".like-btn");
+  const voteEl = card.querySelector(".vote-count");
+
+  const setVoteUI = () => {
+    if (voteEl) {
+      const add = favorites.has(item.id) ? 1 : 0;
+      voteEl.textContent = String(baseVotes + add);
+    }
+  };
+
+  like.classList.toggle("fas", favorites.has(item.id));
+  like.classList.toggle("far", !favorites.has(item.id));
+  setVoteUI();
+
+  like.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (favorites.has(item.id)) {
+      favorites.delete(item.id);
+    } else {
+      favorites.add(item.id);
+    }
+    saveState();
+    updateFavCount();
+    like.classList.toggle("fas");
+    like.classList.toggle("far");
+    setVoteUI();
+  });
+
+  // --- открытие модалки по клику на карточку ---
+  card.addEventListener("click", () => {
+    openModal({
+      id: item.id,
+      name: item.name,
+      price: +item.price,
+      weight: item.weight,
+      image: "images/" + item.images
+    });
+  });
+
+  return card;
+}
+
+
+// === catalog ===
+function buildMenuNav(cats){
+  const nav=document.getElementById("categoryNav"); nav.innerHTML='';
+  cats.forEach(cat=>{
+    const a=document.createElement("a"); a.href="#"+cat.id; a.textContent=cat.name;
+    nav.appendChild(a);
+  });
+  navLinks=nav.querySelectorAll("a");
+}
+function buildCatalog(cats,items){
+  const content=document.getElementById("content"); content.innerHTML='';
+  document.getElementById("categoryNav").style.display="block";
+  cats.forEach(cat=>{
+    const sec=document.createElement("section"); sec.className="section"; sec.id=cat.id;
+    sec.innerHTML="<h2>"+cat.name+"</h2>";
+    items.filter(i=>i.category===cat.id).forEach(item=>{
+      sec.appendChild(renderCard(item));
+    });
+    content.appendChild(sec);
+  });
+  sections=document.querySelectorAll(".section");
+  observeSections();
+}
+function showMenu(){ clearFixedBuy(); buildCatalog(menuData.categories,menuData.menu); }
+function showFavorites(){
+  clearFixedBuy();
+  const content=document.getElementById("content"); content.innerHTML='<h2>Избранное</h2>';
+  document.getElementById("categoryNav").style.display="none";
+  const favItems=menuData.menu.filter(i=>favorites.has(i.id));
+  if(!favItems.length){ content.innerHTML+="<p>Пусто</p>"; return; }
+  favItems.forEach(item=>content.appendChild(renderCard(item)));
+}
+function showCart(){
+  const content=document.getElementById("content"); content.innerHTML='<h2>Корзина</h2>';
+  document.getElementById("categoryNav").style.display="none";
+  clearFixedBuy();
+
+  if(!cart.length){ content.innerHTML+="<p>Пусто</p>"; return; }
+
+  let total=0;
+  cart.forEach(item=>{
+    total += item.price * item.quantity;
+
+    const div=document.createElement("div"); div.className="w3-row basket w3-padding";
+    div.innerHTML=`
+      <div class="w3-col" style="width:50%">
+        <strong>${item.name}</strong><br>
+        <div class="w3-small w3-text-grey">${item.price} грн | ${item.weight}</div>
+        <strong>${item.price*item.quantity} грн</strong>
+      </div>
+      <div class="w3-col w3-padding w3-center" style="width:50%">
+        <img src="${item.image}" style="width:100%;max-width:200px;">
+        <div class="w3-padding">
+          <button class="w3-btn w3-round-xxlarge w3-black" onclick="decQty('${item.id}')">
+            ${item.quantity===1?'<i class="fa fa-trash"></i>':'-'}
+          </button>
+          <strong> ${item.quantity} </strong>
+          <button class="w3-btn w3-round-xxlarge w3-black" onclick="incQty('${item.id}')">+</button>
+        </div>
+      </div>`;
+    content.appendChild(div);
+  });
+
+  // Панель Итого + Купить
+  const bar=document.createElement('div');
+  bar.className='fixed-buy';
+  bar.innerHTML = `
+    <p class="sum">Итого: ${total} грн</p>
+    <button class="w3-button w3-green w3-round-xxlarge" style="width:100%" onclick="openOrderForm(${total})">Купить</button>
+  `;
+  document.body.appendChild(bar);
+}
+function clearFixedBuy(){
+  const old=document.querySelector('.fixed-buy'); if(old) old.remove();
+}
+function incQty(id){ const it=cart.find(i=>i.id===id); if(it){ it.quantity++; saveState(); showCart(); updateCartCount(); } }
+function decQty(id){
+  const i=cart.findIndex(it=>it.id===id);
+  if(i>-1){ if(cart[i].quantity>1) cart[i].quantity--; else cart.splice(i,1); }
+  saveState(); showCart(); updateCartCount();
+}
+
+// === modal товара ===
+function openModal(p){ currentProduct=p; quantity=1;
+  document.getElementById("modalName").textContent=p.name;
+  document.getElementById("modalPrice").textContent=p.price+" грн";
+  document.getElementById("modalWeight").textContent=p.weight;
+  document.getElementById("modalImage").src=p.image;
+  document.getElementById("qtyValue").textContent=1;
+  document.getElementById("totalPrice").textContent=p.price+" грн";
+  document.getElementById("productModal").style.display="block";
+}
+function closeModal(){ document.getElementById("productModal").style.display="none"; }
+document.getElementById("qtyPlus").onclick=()=>{quantity++;document.getElementById("qtyValue").textContent=quantity;updateTotal();}
+document.getElementById("qtyMinus").onclick=()=>{if(quantity>1){quantity--;document.getElementById("qtyValue").textContent=quantity;updateTotal();}}
+function updateTotal(){ document.getElementById("totalPrice").textContent=(currentProduct.price*quantity)+" грн"; }
+function addToCart(){ if(!currentProduct)return;
+  let ex=cart.find(i=>i.id===currentProduct.id);
+  if(ex) ex.quantity+=quantity; else cart.push({...currentProduct,quantity});
+  saveState(); updateCartCount(); closeModal();
+}
+window.onclick=e=>{
+  if(e.target==document.getElementById("productModal")) closeModal();
+  if(e.target==document.getElementById("orderModal")) document.getElementById("orderModal").style.display='none';
+};
+
+// === заказ (форма) ===
+function openOrderForm(total){
+  document.getElementById('orderTotal').textContent = total;
+  document.getElementById('formTotal').value = total;
+  document.getElementById('formCart').value = JSON.stringify(cart);
+  document.getElementById('orderModal').style.display='block';
+}
+
+// === клики верхнего меню ===
+document.querySelectorAll("#topNav a").forEach(a=>{
+  a.onclick=e=>{
+    e.preventDefault();
+    document.querySelectorAll("#topNav a").forEach(l=>l.classList.remove("active"));
+    a.classList.add("active");
+    const t=a.textContent.toLowerCase();
+    if(t.includes("меню")) showMenu();
+    else if(t.includes("избранное")) showFavorites();
+    else if(t.includes("корзина")) showCart();
+  };
+});
+
+// === подсветка и автоскролл нижнего меню ===
+function observeSections(){
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        navLinks.forEach(l=>{
+          const active = l.getAttribute("href") === "#" + entry.target.id;
+          l.classList.toggle("active", active);
+          if (active) l.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+        });
+      }
+    });
+  },{threshold:0.5});
+  sections.forEach(sec=>observer.observe(sec));
+}
+
+// === init ===
+Promise.all([fetch("menu.json").then(r=>r.json()),fetch("card.html").then(r=>r.text())])
+.then(([data,tpl])=>{
+  menuData=data; cardTemplate=tpl; loadState();
+  buildMenuNav(data.categories); showMenu();
+  updateFavCount(); updateCartCount();
+});
+</script>
+</body>
+</html>
