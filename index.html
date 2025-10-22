@@ -5,6 +5,7 @@
   <title>Магазин с корзиной и избранным</title>
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
 
 /*192.168.0.106*/
@@ -87,8 +88,10 @@ body { margin:0; font-family:Arial,sans-serif; scroll-behavior:smooth; }
 </style>
 </head>
 <body>
-<!-- Верхнее меню -->
 
+<!-- Верхнее меню -->
+<!-- Верхнее меню -->
+<!-- Верхнее меню -->
 <div id="topNav" class="top-nav">
   <div id="searchBox" class="search-box">
     <i id="searchIcon" class="fa fa-search" style="cursor:pointer;padding:14px 10px;"></i>
@@ -163,14 +166,401 @@ body { margin:0; font-family:Arial,sans-serif; scroll-behavior:smooth; }
   </div>
 </div>
 
-<!-- Подключаем по порядку -->
-  <script src="js/utils.js"></script> 
-  <script src="js/menu.js"></script>
-  <script src="js/api.js"></script> 
-  <script src="js/products.js"></script>
-  <script src="js/cart.js"></script>
-  <script src="js/main.js"></script>
+<script>
+/* ========= Глобальные переменные ========= */
+  let startX = 0, startY = 0;
+let currentIndex = 1; // 0: search, 1: menu, 2: favorites, 3: cart
+const tabs = ["search", "menu", "favorites", "cart"];
+let isFromCategoryNav = false;
+let isFromTopNav = false;
 
+/* ========= Обработчики свайпов ========= */
+document.addEventListener("touchstart", e => {
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
+  isFromCategoryNav = e.target.closest("#categoryNav") !== null;
+  isFromTopNav = e.target.closest("#topNav") !== null;
+});
+
+document.addEventListener("touchend", e => {
+  try {
+    // Если свайп на верхнем или нижнем меню — игнор
+    if (isFromCategoryNav || isFromTopNav) return;
+
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return; // игнор вертикали/коротких свайпов
+    e.preventDefault();
+
+    if (dx < 0) activateTab(currentIndex + 1, "left"); // свайп влево
+    else        activateTab(currentIndex - 1, "right"); // свайп вправо
+  } catch(err) {
+    console.error(err);
+  }
+});
+
+/* ========= Прокрутка верхнего меню к активному ========= */
+function scrollTopNavToActive() {
+  const bar = document.getElementById('topNav');
+  const active = bar.querySelector('a.active');
+  if (!active) return;
+
+  const searchBox = document.getElementById('searchBox');
+  const searchWidth = searchBox.offsetWidth || 0;
+
+  const left = active.offsetLeft;
+  const right = left + active.offsetWidth;
+  const viewLeft = bar.scrollLeft;
+  const viewRight = viewLeft + bar.clientWidth;
+
+  // Если активная — "Меню", скроллим чуть дальше, чтобы не пряталась
+  const targetLeft = active.textContent.includes('Меню') ? (left - searchWidth) : left;
+
+  if (targetLeft < viewLeft) {
+    bar.scrollTo({ left: targetLeft, behavior: 'smooth' });
+  } else if (right > viewRight) {
+    bar.scrollTo({ left: right - bar.clientWidth, behavior: 'smooth' });
+  }
+}
+
+
+
+
+
+/* ========= Активация вкладки ========= */
+function activateTab(index, direction = "left") {
+  if (index < 0 || index >= tabs.length) return;
+  currentIndex = index;
+
+  const searchBox = document.getElementById("searchBox");
+  const searchInput = document.getElementById("searchInput");
+  const topNav = document.getElementById("topNav");
+
+  let savedScroll = topNav.scrollLeft; // запоминаем позицию скролла
+
+  // Если был поиск и уходим на другую вкладку
+  if (searchBox.classList.contains("active") && index !== 0) {
+    searchInput.blur();
+    searchBox.classList.remove("active");
+    searchInput.value = "";
+
+    // Восстанавливаем скролл после анимации сворачивания
+    setTimeout(() => {
+      topNav.scrollLeft = savedScroll;
+      scrollTopNavToActive();
+    }, 310);
+  }
+
+  const content = document.getElementById("content");
+  content.className = direction === "left" ? "content-left" : "content-right";
+
+  setTimeout(() => {
+    const t = tabs[index];
+    if (t === "search") {
+      showMenu();
+      searchBox.classList.add("active");
+      setTimeout(() => searchInput.focus(), 200);
+    }
+    if (t === "menu") {
+      showMenu();
+    }
+    if (t === "favorites") showFavorites();
+    if (t === "cart") showCart();
+    content.className = "content-active";
+
+    if (t !== "search") {
+      scrollTopNavToActive(); // только если не поиск
+    }
+  }, 200);
+
+  // Подсветка кнопок верхнего меню
+  const topLinks = document.querySelectorAll("#topNav a");
+  topLinks.forEach((a, i) => {
+    a.classList.toggle("active", i === index - 1);
+  });
+}
+
+
+function updateFavCount() {
+  const el = document.getElementById("favCount");
+  if (favorites.size) { el.style.display = "inline-block"; el.textContent = favorites.size; }
+  else el.style.display = "none";
+  requestAnimationFrame(scrollTopNavToActive);
+}
+
+function updateCartCount() {
+  const el = document.getElementById("cartCount");
+  if (cart.length) { el.style.display = "inline-block"; el.textContent = cart.length; }
+  else el.style.display = "none";
+  requestAnimationFrame(scrollTopNavToActive);
+}
+
+
+/* ========= Состояние ========= */
+let menuData = null, cardTemplate = '', sections = [], navLinks = [];
+let favorites = new Set(), cart = [], currentProduct = null, quantity = 1;
+
+function loadState() {
+  try { favorites = new Set(JSON.parse(localStorage.getItem("favorites") || "[]")); } catch { favorites = new Set(); }
+  try { cart = JSON.parse(localStorage.getItem("cart") || "[]"); } catch { cart = []; }
+}
+function saveState() {
+  localStorage.setItem("favorites", JSON.stringify([...favorites]));
+  localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+/* ========= Счётчики ========= */
+function updateFavCount() {
+  const el = document.getElementById("favCount");
+  if (favorites.size) { el.style.display = "inline-block"; el.textContent = favorites.size; }
+  else el.style.display = "none";
+}
+function updateCartCount() {
+  const el = document.getElementById("cartCount");
+  if (cart.length) { el.style.display = "inline-block"; el.textContent = cart.length; }
+  else el.style.display = "none";
+}
+
+/* ========= Карточка ========= */
+function renderCard(item) {
+  const baseVotes = Number(item.vote || 0);
+
+  let html = cardTemplate
+  .replace(/{IMAGE}/g, item.images)
+  .replace(/{NAME}/g, item.name)
+  .replace(/{PRICE}/g, item.price)
+  .replace(/{WEIGHT}/g, item.weight)
+  .replace(/{VOTE}/g, baseVotes);
+
+  const wrap = document.createElement("div");
+  wrap.innerHTML = html;
+  const card = wrap.firstElementChild;
+
+  // Лайк
+  const like = card.querySelector(".like-btn");
+  const voteEl = card.querySelector(".vote-count");
+
+  const setVoteUI = () => {
+    if (voteEl) {
+      const add = favorites.has(item.id) ? 1 : 0;
+      voteEl.textContent = String(baseVotes + add);
+    }
+  };
+
+  like.classList.toggle("fas", favorites.has(item.id));
+  like.classList.toggle("far", !favorites.has(item.id));
+  setVoteUI();
+
+  like.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (favorites.has(item.id)) {
+      favorites.delete(item.id);
+      if (currentIndex === 2) { // если мы в "Избранном"
+        card.remove();
+        if (favorites.size === 0) {
+          document.getElementById("content").innerHTML = "<h2 style='margin-top:70px'>Избранное</h2><p>Пусто</p>";
+        }
+      }
+    } else {
+      favorites.add(item.id);
+    }
+    saveState();
+    updateFavCount();
+    like.classList.toggle("fas");
+    like.classList.toggle("far");
+    setVoteUI();
+  });
+
+  // Модалка
+  card.addEventListener("click", () => {
+    openModal({
+      id: item.id,
+      name: item.name,
+      price: +item.price,
+      weight: item.weight,
+      image: "images/" + item.images
+    });
+  });
+
+  return card;
+}
+
+/* ========= Каталог ========= */
+function buildMenuNav(cats) {
+  const nav = document.getElementById("categoryNav"); nav.innerHTML = '';
+  cats.forEach(cat => {
+    const a = document.createElement("a"); a.href = "#" + cat.id; a.textContent = cat.name;
+    nav.appendChild(a);
+  });
+  navLinks = nav.querySelectorAll("a");
+}
+
+function buildCatalog(cats, items) {
+  const content = document.getElementById("content"); content.innerHTML = '';
+  document.getElementById("categoryNav").style.display = "block";
+  cats.forEach(cat => {
+    const sec = document.createElement("section"); sec.className = "section"; sec.id = cat.id;
+    sec.innerHTML = "<h2>" + cat.name + "</h2>";
+    items.filter(i => i.category === cat.id).forEach(item => {
+      sec.appendChild(renderCard(item));
+    });
+    content.appendChild(sec);
+  });
+  sections = document.querySelectorAll(".section");
+  observeSections();
+}
+
+function showMenu() { clearFixedBuy(); buildCatalog(menuData.categories, menuData.menu); }
+
+/* ========= Поиск ========= */
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.toLowerCase();
+  if (!query) { showMenu(); return; }
+  clearFixedBuy();
+  const content = document.getElementById("content");
+  content.innerHTML = '<h2 style="margin-top:70px">Результаты поиска</h2>';
+  document.getElementById("categoryNav").style.display = "none";
+  const matches = menuData.menu.filter(i => i.name.toLowerCase().includes(query));
+  if (!matches.length) { content.innerHTML += "<p>Ничего не найдено</p>"; return; }
+  matches.forEach(item => content.appendChild(renderCard(item)));
+});
+
+/* ========= Избранное ========= */
+function showFavorites() {
+  clearFixedBuy();
+  const content = document.getElementById("content");
+  content.classList.remove("content-left", "content-right");
+  content.innerHTML = '<h2 style="margin-top:70px">Избранное</h2>';
+  document.getElementById("categoryNav").style.display = "none";
+  const favItems = menuData.menu.filter(i => favorites.has(i.id));
+  if (!favItems.length) { content.innerHTML += "<p>Пусто</p>"; return; }
+  favItems.forEach(item => content.appendChild(renderCard(item)));
+  setTimeout(scrollTopNavToActive,150);
+}
+
+/* ========= Корзина ========= */
+function showCart() {
+  const content = document.getElementById("content");
+  content.classList.remove("content-left", "content-right");
+  content.innerHTML = '<h2 style="margin-top:70px">Корзина</h2>';
+  document.getElementById("categoryNav").style.display = "none";
+  clearFixedBuy();
+
+  if (!cart.length) { content.innerHTML += "<p>Пусто</p>"; return; }
+
+  let total = 0;
+  cart.forEach(item => {
+    total += item.price * item.quantity;
+    const div = document.createElement("div"); div.className = "w3-row basket w3-padding";
+    div.innerHTML = `
+      <div class="w3-col" style="width:50%">
+        <strong>${item.name}</strong><br>
+        <div class="w3-small w3-text-grey">${item.price} грн | ${item.weight}</div>
+        <strong>${item.price * item.quantity} грн</strong>
+      </div>
+      <div class="w3-col w3-padding w3-center" style="width:50%">
+        <img src="${item.image}" style="width:100%;max-width:200px;">
+        <div class="w3-padding">
+          <button class="w3-btn w3-round-xxlarge w3-black" onclick="decQty('${item.id}')">
+            ${item.quantity === 1 ? '<i class="fa fa-trash"></i>' : '-'}
+          </button>
+          <strong> ${item.quantity} </strong>
+          <button class="w3-btn w3-round-xxlarge w3-black" onclick="incQty('${item.id}')">+</button>
+        </div>
+    </div>`;
+    content.appendChild(div);
+  });
+
+  const bar = document.createElement('div');
+  bar.className = 'fixed-buy';
+  bar.innerHTML = `
+    <p class="sum">Итого: ${total} грн</p>
+    <button class="w3-button w3-green w3-round-xxlarge" style="width:100%" onclick="openOrderForm(${total})">Купить</button>
+  `;
+  document.body.appendChild(bar);
+  setTimeout(scrollTopNavToActive,150);
+}
+
+function clearFixedBuy() {
+  const old = document.querySelector('.fixed-buy'); if (old) old.remove();
+}
+function incQty(id) { const it = cart.find(i => i.id === id); if (it) { it.quantity++; saveState(); showCart(); updateCartCount(); } }
+function decQty(id) {
+  const i = cart.findIndex(it => it.id === id);
+  if (i > -1) { if (cart[i].quantity > 1) cart[i].quantity--; else cart.splice(i, 1); }
+  saveState(); showCart(); updateCartCount();
+}
+
+/* ========= Модалка ========= */
+function openModal(p) {
+  currentProduct = p; quantity = 1;
+  document.getElementById("modalName").textContent = p.name;
+  document.getElementById("modalPrice").textContent = p.price + " грн";
+  document.getElementById("modalWeight").textContent = p.weight;
+  document.getElementById("modalImage").src = p.image;
+  document.getElementById("qtyValue").textContent = 1;
+  document.getElementById("totalPrice").textContent = p.price + " грн";
+  document.getElementById("productModal").style.display = "block";
+}
+function closeModal() { document.getElementById("productModal").style.display = "none"; }
+document.getElementById("qtyPlus").onclick = () => { quantity++; document.getElementById("qtyValue").textContent = quantity; updateTotal(); }
+document.getElementById("qtyMinus").onclick = () => { if (quantity > 1) { quantity--; document.getElementById("qtyValue").textContent = quantity; updateTotal(); } }
+function updateTotal() { document.getElementById("totalPrice").textContent = (currentProduct.price * quantity) + " грн"; }
+function addToCart() {
+  if (!currentProduct) return;
+  let ex = cart.find(i => i.id === currentProduct.id);
+  if (ex) ex.quantity += quantity; else cart.push({ ...currentProduct, quantity });
+  saveState(); updateCartCount(); closeModal();
+}
+window.onclick = e => {
+  if (e.target == document.getElementById("productModal")) closeModal();
+  if (e.target == document.getElementById("orderModal")) document.getElementById("orderModal").style.display = 'none';
+};
+
+/* ========= Заказ ========= */
+function openOrderForm(total) {
+  document.getElementById('orderTotal').textContent = total;
+  document.getElementById('formTotal').value = total;
+  document.getElementById('formCart').value = JSON.stringify(cart);
+  document.getElementById('orderModal').style.display = 'block';
+}
+
+/* ========= Навигация topNav ========= */
+document.querySelectorAll("#topNav a").forEach((a, idx) => {
+  a.onclick = e => {
+    e.preventDefault();
+    const dir = (idx + 1) > currentIndex ? "left" : "right";
+    activateTab(idx + 1, dir);
+  };
+});
+document.getElementById("searchIcon").onclick = () => activateTab(0, "right");
+
+/* ========= Подсветка нижнего меню ========= */
+function observeSections() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => {
+          const active = l.getAttribute("href") === "#" + entry.target.id;
+          l.classList.toggle("active", active);
+          if (active) l.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+        });
+      }
+    });
+  }, { threshold: 0.5 });
+  sections.forEach(sec => observer.observe(sec));
+}
+
+/* ========= Init ========= */
+Promise.all([fetch("menu.json").then(r => r.json()), fetch("card.html").then(r => r.text())])
+.then(([data, tpl]) => {
+  menuData = data; cardTemplate = tpl; loadState();
+  buildMenuNav(data.categories); showMenu();
+  updateFavCount(); updateCartCount();
+});
+</script>
 
 
 </body>
