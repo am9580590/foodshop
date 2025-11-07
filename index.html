@@ -1,567 +1,649 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="uk">
 <head>
-  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
-  <title>Магазин с корзиной и избранным</title>
-  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <style>
-
-/*192.168.0.106*/
-#content {
-  transition: transform 0.1s ease;
-}
-.content-left {
-  transform: translateX(200px);
-  opacity: 0;
-}
-.content-right {
-  transform: translateX(-200px);
-  opacity: 0;
-}
-.content-active {
-  /*transform: translateX(0);*/
-  opacity: 1;
-}
-#content h2 {
-  margin-top: 60px; /* чуть больше, чем высота верхнего меню */
-}
-.search-box {
-  display: inline-flex;
-  align-items: center;
-  position: relative;
-  transition: width 0.3s ease;
-  overflow: hidden;
-  vertical-align: middle;
-  width: 40px; /* фикс для иконки */
-}
-
-.search-box.active {
-  width: 200px; /* ширина при раскрытии */
-}
-
-.search-box input {
-  border: 1px solid #ccc;
-  border-radius: 30px;
-  padding: 5px 10px;
-  font-size: 14px;
-  width: 100%;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.search-box.active input {
-  opacity: 1;
-}
-
-body { margin:0; font-family:Arial,sans-serif; scroll-behavior:smooth; }
-
-.top-nav {
-  position:fixed; top:0; left:0; right:0; background:white; z-index:9998;
-  padding:2px; white-space:nowrap;
-  overflow-x:auto;                 /* <-- нужно для горизонтального скролла */
-  -webkit-overflow-scrolling:touch;/* <-- инерция на iOS */
-  overflow-anchor: none;
-}
-.top-nav a {display:inline-block;padding:14px 16px;text-decoration:none;color:black;}
-.top-nav a.active {border:1px solid maroon;border-radius:30px;color:maroon;font-weight:600;}
-.count-badge {background:maroon;color:white;border-radius:50%;padding:2px 7px;font-size:12px;margin-left:5px;vertical-align:middle;font-weight:600;}
-
-.category-nav {position:fixed;bottom:0;left:0;right:0;background:white;overflow-x:auto;white-space:nowrap;border-top:1px solid #ccc;z-index: 1;}
-.category-nav a {display:inline-block;padding:14px 16px;text-decoration:none;color:black;transition:0.3s;}
-.category-nav a.active {background:maroon;color:white;border-radius:30px;font-weight:600;}
-
-.content {padding:60px 0 60px 0;}
-.section {padding:20px;margin-bottom:40px;border-bottom:1px solid #ccc;}
-
-.w3-modal-content {position:fixed;bottom:0;left:0;right:0;max-width:400px;margin:auto;}
-.square-image {width:100%;height:300px;overflow:hidden;}
-.square-image img {width:100%;height:100%;object-fit:cover;}
-
-.like-container {cursor:pointer;display:flex;align-items:center;gap:4px;}
-.like-btn {color:red;font-size:20px;}
-
-/* Нижняя панель "Итого + Купить" только на странице корзины */
-.fixed-buy {position:fixed;left:0;right:0;bottom:0;background:#fff;box-shadow:0 -2px 6px rgba(0,0,0,.1);padding:10px 16px;z-index:9997;}
-.fixed-buy .sum {font-weight:700;margin:0 0 8px;}
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Калькулятор оцінки — повна версія</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --card:#fff; --accent:#2563eb; --muted:#64748b;
+    --radius:12px;
+  }
+  body{
+    font-family: Inter, Roboto, system-ui, Arial, sans-serif;
+    background:var(--bg); color:#0f172a; margin:0; padding:20px;
+  }
+  .wrap{max-width:1200px;margin:0 auto}
+  .card{background:var(--card);padding:16px;border-radius:var(--radius);box-shadow:0 10px 30px rgba(15,23,42,0.06)}
+  h1{font-size:18px;margin:0 0 12px;text-align:center}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  label{font-size:13px}
+  input[type=number], input[type=url], select, input[type=text]{padding:8px;border:1px solid #d1d5db;border-radius:8px;box-sizing:border-box}
+  input[type=number]{width:140px}
+  button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:10px;cursor:pointer}
+  button.ghost{background:transparent;color:var(--accent);border:1px solid #dbeafe}
+  .small{font-size:12px;color:var(--muted)}
+  .right{margin-left:auto}
+  .hidden{display:none}
+  .result-box{margin-top:12px;padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e6eef6}
+  .url-ind{cursor:pointer;padding:4px 8px;border-radius:6px;background:#eef2ff;border:1px solid #dbeafe;color:#0b5cff}
+  .highlight-chosen{background:#eefdf0}
+  .highlight-dropped{background:#fff6f6}
+  .editable-corr{width:80px;padding:6px;border-radius:6px;border:1px solid #cbd5e1}
+  .muted-2{color:#475569;font-size:13px}
+  .controls {display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .note{font-size:12px;color:var(--muted);margin-top:8px}
+  .table-container { display:block; overflow-x:auto; width:100%; -webkit-overflow-scrolling:touch; padding-bottom:8px; }
+  table.vert{border-collapse:collapse;margin-top:12px;font-size:13px;width:max-content;min-width:100%}
+  table.vert th, table.vert td{border:1px solid #e6eef6;padding:10px;text-align:center;vertical-align:middle}
+  table.vert th{background:#f1f5f9;font-weight:600}
+  select{width:100%;max-width:160px}
+  .inp-num{width:100px}
+  .th-add { display:flex; align-items:center; justify-content:center; }
+  .add-btn{ background:transparent;color:var(--accent);border:1px dashed #c7ddff;border-radius:6px;padding:6px 8px;font-weight:700;cursor:pointer; }
+  .steps-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  @media (max-width:900px){
+    .card{padding:14px}
+    input[type=number]{width:120px}
+    table.vert{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+    button{width:100%}
+    .row{gap:8px}
+    .right{margin-left:0}
+  }
 </style>
 </head>
 <body>
+<div class="wrap">
+  <div class="card">
+    <h1>Калькулятор оцінки — повна версія</h1>
 
-<!-- Верхнее меню -->
-<!-- Верхнее меню -->
-<!-- Верхнее меню -->
-<div id="topNav" class="top-nav">
-  <div id="searchBox" class="search-box">
-    <i id="searchIcon" class="fa fa-search" style="cursor:pointer;padding:14px 10px;"></i>
-    <input type="text" id="searchInput" placeholder="Поиск...">
-  </div>
-  <a href="#menu" class="active">Меню</a>
-  <a href="#favorites">Избранное 
-    <span id="favCount" class="count-badge" style="display:none"></span>
-  </a>
-  <a href="#cart">Корзина 
-    <span id="cartCount" class="count-badge" style="display:none"></span>
-  </a>
-</div>
-
-
-<!-- Нижнее меню категорий -->
-<div id="categoryNav" class="category-nav"></div>
-
-<!-- Контент -->
-<div class="content" id="content"></div>
-
-<!-- Модальное окно товара -->
-<div id="productModal" class="w3-modal">
-  <div class="w3-modal-content w3-animate-bottom">
-    <header class="square-image">
-      <span onclick="closeModal()" class="w3-button w3-display-topright">&times;</span>
-      <img id="modalImage" src="" alt="">
-    </header>
-    <div class="w3-container" style="padding-bottom:20px;">
-      <h3 id="modalName"></h3>
-      <div style="display:flex;justify-content:space-between;">
-        <p id="modalPrice"></p><p id="modalWeight"></p>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:15px;">
-        <div>
-          <button id="qtyMinus" class="w3-button w3-black w3-round">-</button>
-          <span id="qtyValue">1</span>
-          <button id="qtyPlus" class="w3-button w3-black w3-round">+</button>
-        </div>
-        <p id="totalPrice" style="font-weight:bold;">0 грн</p>
-        <button class="w3-button w3-green" onclick="addToCart()">В корзину</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Модальное окно оформления заказа -->
-<div id="orderModal" class="w3-modal">
-  <div class="w3-modal-content w3-animate-bottom">
-    <header class="w3-container w3-teal">
-      <span onclick="document.getElementById('orderModal').style.display='none'" class="w3-button w3-display-topright">&times;</span>
-      <h3>Оформление заказа</h3>
-    </header>
-    <div class="w3-container" style="padding-bottom:20px;">
-      <form id="orderForm" method="post" action="order.php">
-        <p>Сумма заказа: <strong id="orderTotal"></strong> грн</p>
-        <input type="hidden" name="total" id="formTotal">
-        <p><input class="w3-input" type="text" name="name" placeholder="Ваше имя" required></p>
-        <p><input class="w3-input" type="tel" name="phone" placeholder="Телефон" required></p>
-        <p>
-          <select class="w3-select" name="delivery" required>
-            <option value="" disabled selected>Выберите доставку</option>
-            <option value="Самовывоз">Самовывоз</option>
-            <option value="Адресная доставка">Адресная доставка</option>
+    <!-- Stage 1: вводим данные (расширенный) -->
+    <div id="stage1">
+      <h3>Етап 1 — Початкові дані</h3>
+      <div class="row" style="align-items:center">
+        <label>Місто:
+          <select id="s_city">
+            <option value="odesa" selected>Одеса</option>
+            <option value="kyiv">Київ</option>
+            <option value="lviv">Львів</option>
+            <option value="dnipro">Дніпро</option>
+            <option value="kharkiv">Харків</option>
           </select>
-        </p>
-        <p><textarea class="w3-input" name="comment" placeholder="Комментарий к заказу"></textarea></p>
-        <input type="hidden" name="cart" id="formCart">
-        <button class="w3-button w3-green" type="submit" style="width:100%">Отправить заказ</button>
-      </form>
+        </label>
+
+        <label>Кімнат: <input id="s_rooms" type="number" min="1" value="2"></label>
+        <label>Поверх (об'єкта): <input id="s_floorNum" type="number" min="1" value="3"></label>
+        <label>Поверховість: <input id="s_totalFloors" type="number" min="1" value="5"></label>
+      </div>
+
+      <div class="row" style="align-items:center;margin-top:8px">
+        <label>Площа об'єкта (м²): <input id="s_area" type="number" min="1" placeholder="наприклад 50"></label>
+        <label>Рекомендована вартість (₴): <input id="s_priceUAH" type="number" min="0" placeholder="наприклад 1500000"></label>
+        <label>Курс долара (₴ → $): <input id="s_usdRate" type="number" min="0" step="0.01" placeholder="наприклад 40.5"></label>
+        <div class="right small">Якщо не заповнено — можна переходити далі</div>
+      </div>
+
+      <div class="steps-row">
+        <button id="btnNext">Далі</button>
+        <button id="btnSkip" class="ghost">Пропустити</button>
+      </div>
     </div>
+
+    <!-- Stage 1.5: диапазон + LUN link -->
+    <div id="stageRange" class="hidden" style="margin-top:12px">
+      <h3>Орієнтир — ціна за м² & пошук аналогів</h3>
+      <div class="row">
+        <div id="rangeText" style="font-weight:700"></div>
+        <div class="right">
+          <a id="lunLink" href="#" target="_blank" class="small" style="display:inline-block;margin-right:8px">🔗 Відкрити пошук у LUN</a>
+          <button id="btnRangeNext">Далі в калькулятор</button>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <div id="objectSummary" class="small"></div>
+      </div>
+      <div style="margin-top:8px">
+        <button id="btnRangeBack" class="ghost">Назад</button>
+      </div>
+    </div>
+
+    <!-- Stage 2: калькулятор -->
+    <div id="stageCalc" class="hidden" style="margin-top:12px">
+      <h3>Етап 2 — Калькулятор</h3>
+
+      <div class="row" style="align-items:flex-end">
+        <div style="min-width:420px">
+          <div class="small">Об'єкт оцінки</div>
+          <div class="row" style="margin-top:6px">
+            <label>Площа (м²): <input id="objArea" type="number" min="1" placeholder="площа з першого кроку"></label>
+            <label>Стан:
+              <select id="objState">
+                <option value="0">незадовільний</option>
+                <option value="5">задовільний</option>
+                <option value="10" selected>добрий</option>
+                <option value="15">відмінний</option>
+              </select>
+            </label>
+            <label>Поверх:
+              <select id="objFloor">
+                <option value="first">перший</option>
+                <option value="middle" selected>середній</option>
+                <option value="last">останній</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-left:auto;min-width:220px">
+          <div class="small">Поправка на торг (загальна — вручну або пусто для авто)</div>
+          <input id="torgInput" type="number" min="-20" max="0" placeholder="-10" style="width:120px;margin-top:6px">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <label>Кількість аналогів для підсумку:
+          <select id="analogsCount">
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+          </select>
+        </label>
+
+        <div style="margin-left:auto">
+          <div class="controls"></div>
+        </div>
+      </div>
+
+      <div class="note">Таблиця введення: параметри зверху вниз, аналоги по колонках. Змінюйте дані в клітинках — при натисканні «Розрахувати» вони використовуються в обчисленнях.</div>
+
+      <div id="inputTableContainer" class="table-container" style="margin-top:12px"></div>
+
+      <div style="margin-top:10px" class="steps-row">
+        <button id="btnCalc" class="btn-primary">Розрахувати</button>
+        <button id="btnCalcBack" class="ghost">Назад</button>
+      </div>
+
+      <div id="calcNote" class="small" style="margin-top:8px">Якщо аналогів більше, ніж N — калькулятор підбере оптимальну підгрупу.</div>
+    </div>
+
+    <!-- Output -->
+    <div id="outputWrap" class="hidden" style="margin-top:12px">
+      <div class="steps-row" style="align-items:center">
+        <div id="appliedTorg" class="muted-2" style="margin-bottom:6px"></div>
+        <div class="right">
+          <button id="btnOutputBack" class="ghost">Назад</button>
+        </div>
+      </div>
+      <div id="output" class="result-box"></div>
+    </div>
+
   </div>
 </div>
 
 <script>
-/* ========= Глобальные переменные ========= */
-  let startX = 0, startY = 0;
-let currentIndex = 1; // 0: search, 1: menu, 2: favorites, 3: cart
-const tabs = ["search", "menu", "favorites", "cart"];
-let isFromCategoryNav = false;
-let isFromTopNav = false;
+  
+document.addEventListener('DOMContentLoaded', () => {
+  /* ---------- Helpers ---------- */
+  const $ = id => document.getElementById(id);
+  const toUSD = n => '$' + Number(Math.round(n)).toLocaleString('en-US');
+  const toUAH = (n, rate) => '₴' + Number(Math.round(n * rate)).toLocaleString('en-US');
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 
-/* ========= Обработчики свайпов ========= */
-document.addEventListener("touchstart", e => {
-  startX = e.touches[0].clientX;
-  startY = e.touches[0].clientY;
-  isFromCategoryNav = e.target.closest("#categoryNav") !== null;
-  isFromTopNav = e.target.closest("#topNav") !== null;
-});
+  /* ---------- Elements (stage navigation) ---------- */
+  const btnNext = $('btnNext'), btnSkip = $('btnSkip');
+  const btnRangeNext = $('btnRangeNext'), btnRangeBack = $('btnRangeBack');
+  const btnCalc = $('btnCalc'), btnCalcBack = $('btnCalcBack');
+  const btnOutputBack = $('btnOutputBack');
 
-document.addEventListener("touchend", e => {
-  try {
-    // Если свайп на верхнем или нижнем меню — игнор
-    if (isFromCategoryNav || isFromTopNav) return;
+  const stage1 = $('stage1'), stageRange = $('stageRange'), stageCalc = $('stageCalc'), outputWrap = $('outputWrap');
 
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
+  /* ---------- Inputs (step1 → stageRange) ---------- */
+  const s_city = $('s_city'), s_rooms = $('s_rooms'), s_floorNum = $('s_floorNum'), s_totalFloors = $('s_totalFloors');
+  const s_area = $('s_area'), s_priceUAH = $('s_priceUAH'), s_usdRate = $('s_usdRate');
 
-    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return; // игнор вертикали/коротких свайпов
-    e.preventDefault();
+  const rangeText = $('rangeText'), objectSummary = $('objectSummary'), lunLink = $('lunLink');
 
-    if (dx < 0) activateTab(currentIndex + 1, "left"); // свайп влево
-    else        activateTab(currentIndex - 1, "right"); // свайп вправо
-  } catch(err) {
-    console.error(err);
+  /* ---------- Inputs (calculator) ---------- */
+  const objArea = $('objArea'), objState = $('objState'), objFloor = $('objFloor');
+  const torgInput = $('torgInput'), analogsCount = $('analogsCount'), inputTableContainer = $('inputTableContainer');
+
+  const appliedTorgEl = $('appliedTorg'), output = $('output');
+
+  /* ---------- State ---------- */
+  let recommended = null; // {low, high, rate, totalUAH}
+  let autoAppliedTorg = null;
+  let analogsData = [];
+  let manualOverrides = {}; // { id: { stateCorr, areaCorr, floorCorr } }
+
+  /* ---------- LUN URL generation ---------- */
+  function floorCountMapFor(totalFloors){
+    const map = {
+      1: {min:1,max:1},
+      2: {min:2,max:4},
+      3: {min:2,max:4},
+      4: {min:2,max:4},
+      5: {min:4,max:6},
+      6: {min:5,max:8},
+      7: {min:6,max:12},
+      8: {min:6,max:12},
+      9: {min:8,max:999},
+    };
+    return map[totalFloors] || {min: Math.max(2, totalFloors-2), max: totalFloors+3};
   }
-});
-
-/* ========= Прокрутка верхнего меню к активному ========= */
-function scrollTopNavToActive() {
-  const bar = document.getElementById('topNav');
-  const active = bar.querySelector('a.active');
-  if (!active) return;
-
-  const searchBox = document.getElementById('searchBox');
-  const searchWidth = searchBox.offsetWidth || 0;
-
-  const left = active.offsetLeft;
-  const right = left + active.offsetWidth;
-  const viewLeft = bar.scrollLeft;
-  const viewRight = viewLeft + bar.clientWidth;
-
-  // Если активная — "Меню", скроллим чуть дальше, чтобы не пряталась
-  const targetLeft = active.textContent.includes('Меню') ? (left - searchWidth) : left;
-
-  if (targetLeft < viewLeft) {
-    bar.scrollTo({ left: targetLeft, behavior: 'smooth' });
-  } else if (right > viewRight) {
-    bar.scrollTo({ left: right - bar.clientWidth, behavior: 'smooth' });
-  }
-}
-
-
-
-
-
-/* ========= Активация вкладки ========= */
-function activateTab(index, direction = "left") {
-  if (index < 0 || index >= tabs.length) return;
-  currentIndex = index;
-
-  const searchBox = document.getElementById("searchBox");
-  const searchInput = document.getElementById("searchInput");
-  const topNav = document.getElementById("topNav");
-
-  let savedScroll = topNav.scrollLeft; // запоминаем позицию скролла
-
-  // Если был поиск и уходим на другую вкладку
-  if (searchBox.classList.contains("active") && index !== 0) {
-    searchInput.blur();
-    searchBox.classList.remove("active");
-    searchInput.value = "";
-
-    // Восстанавливаем скролл после анимации сворачивания
-    setTimeout(() => {
-      topNav.scrollLeft = savedScroll;
-      scrollTopNavToActive();
-    }, 310);
+  function generateLunUrl(obj){
+    const base = "https://lun.ua/sale";
+    const city = (obj.city || 'odesa');
+    const rooms = obj.rooms || 1;
+    const minP = Math.max(0, Math.round(obj.pricePerSqm || 0));
+    const maxP = Math.max(minP, Math.round((obj.pricePerSqm || 0) * 1.2));
+    const totalFloors = obj.totalFloors || 5;
+    const floorRange = floorCountMapFor(totalFloors);
+    let isNotFirst = false, isNotLast = false;
+    const floorNum = obj.floorNum || 1;
+    if (floorNum > 1 && floorNum < totalFloors) { isNotFirst = true; isNotLast = true; }
+    return `${base}/${city}/flats?room_count=${rooms}&price_sqm_min=${minP}&price_sqm_max=${maxP}&currency=USD&is_not_first_floor=${isNotFirst}&is_not_last_floor=${isNotLast}&floor_count_min=${floorRange.min}&floor_count_max=${floorRange.max}`;
   }
 
-  const content = document.getElementById("content");
-  content.className = direction === "left" ? "content-left" : "content-right";
+  /* ---------- Stage navigation (Step1 -> StepRange) ---------- */
+  btnNext.addEventListener('click', () => {
+    const areaVal = Number(s_area.value) || NaN;
+    const totalUAH = Number(s_priceUAH.value) || NaN;
+    const rate = Number(s_usdRate.value) || NaN;
 
-  setTimeout(() => {
-    const t = tabs[index];
-    if (t === "search") {
-      showMenu();
-      searchBox.classList.add("active");
-      setTimeout(() => searchInput.focus(), 200);
-    }
-    if (t === "menu") {
-      showMenu();
-    }
-    if (t === "favorites") showFavorites();
-    if (t === "cart") showCart();
-    content.className = "content-active";
-
-    if (t !== "search") {
-      scrollTopNavToActive(); // только если не поиск
-    }
-  }, 200);
-
-  // Подсветка кнопок верхнего меню
-  const topLinks = document.querySelectorAll("#topNav a");
-  topLinks.forEach((a, i) => {
-    a.classList.toggle("active", i === index - 1);
-  });
-}
-
-
-function updateFavCount() {
-  const el = document.getElementById("favCount");
-  if (favorites.size) { el.style.display = "inline-block"; el.textContent = favorites.size; }
-  else el.style.display = "none";
-  requestAnimationFrame(scrollTopNavToActive);
-}
-
-function updateCartCount() {
-  const el = document.getElementById("cartCount");
-  if (cart.length) { el.style.display = "inline-block"; el.textContent = cart.length; }
-  else el.style.display = "none";
-  requestAnimationFrame(scrollTopNavToActive);
-}
-
-
-/* ========= Состояние ========= */
-let menuData = null, cardTemplate = '', sections = [], navLinks = [];
-let favorites = new Set(), cart = [], currentProduct = null, quantity = 1;
-
-function loadState() {
-  try { favorites = new Set(JSON.parse(localStorage.getItem("favorites") || "[]")); } catch { favorites = new Set(); }
-  try { cart = JSON.parse(localStorage.getItem("cart") || "[]"); } catch { cart = []; }
-}
-function saveState() {
-  localStorage.setItem("favorites", JSON.stringify([...favorites]));
-  localStorage.setItem("cart", JSON.stringify(cart));
-}
-
-/* ========= Счётчики ========= */
-function updateFavCount() {
-  const el = document.getElementById("favCount");
-  if (favorites.size) { el.style.display = "inline-block"; el.textContent = favorites.size; }
-  else el.style.display = "none";
-}
-function updateCartCount() {
-  const el = document.getElementById("cartCount");
-  if (cart.length) { el.style.display = "inline-block"; el.textContent = cart.length; }
-  else el.style.display = "none";
-}
-
-/* ========= Карточка ========= */
-function renderCard(item) {
-  const baseVotes = Number(item.vote || 0);
-
-  let html = cardTemplate
-  .replace(/{IMAGE}/g, item.images)
-  .replace(/{NAME}/g, item.name)
-  .replace(/{PRICE}/g, item.price)
-  .replace(/{WEIGHT}/g, item.weight)
-  .replace(/{VOTE}/g, baseVotes);
-
-  const wrap = document.createElement("div");
-  wrap.innerHTML = html;
-  const card = wrap.firstElementChild;
-
-  // Лайк
-  const like = card.querySelector(".like-btn");
-  const voteEl = card.querySelector(".vote-count");
-
-  const setVoteUI = () => {
-    if (voteEl) {
-      const add = favorites.has(item.id) ? 1 : 0;
-      voteEl.textContent = String(baseVotes + add);
-    }
-  };
-
-  like.classList.toggle("fas", favorites.has(item.id));
-  like.classList.toggle("far", !favorites.has(item.id));
-  setVoteUI();
-
-  like.addEventListener("click", (e) => {
-    e.stopPropagation();
-    if (favorites.has(item.id)) {
-      favorites.delete(item.id);
-      if (currentIndex === 2) { // если мы в "Избранном"
-        card.remove();
-        if (favorites.size === 0) {
-          document.getElementById("content").innerHTML = "<h2 style='margin-top:70px'>Избранное</h2><p>Пусто</p>";
-        }
-      }
+    // compute recommended range if all provided
+    if (!isNaN(areaVal) && areaVal>0 && !isNaN(totalUAH) && totalUAH>0 && !isNaN(rate) && rate>0) {
+      const base = totalUAH / areaVal / rate;
+      recommended = { low: base, high: base*1.2, rate, totalUAH };
+      rangeText.textContent = `${toUSD(recommended.low)} – ${toUSD(recommended.high)} за м²`;
     } else {
-      favorites.add(item.id);
+      recommended = null;
+      rangeText.textContent = `Дані неповні — діапазон не обчислено.`;
     }
-    saveState();
-    updateFavCount();
-    like.classList.toggle("fas");
-    like.classList.toggle("far");
-    setVoteUI();
+
+    // summary + LUN link
+    const obj = {
+      city: s_city.value,
+      rooms: Number(s_rooms.value) || 1,
+      floorNum: Number(s_floorNum.value) || 1,
+      totalFloors: Number(s_totalFloors.value) || 1,
+      pricePerSqm: recommended ? recommended.low : 0
+    };
+
+    objectSummary.textContent = `Місто: ${s_city.options[s_city.selectedIndex].text}; Кімнат: ${obj.rooms}; Поверх: ${obj.floorNum}; Поверховість: ${obj.totalFloors}; Площа: ${s_area.value || '-' } м²`;
+
+    const lunUrl = generateLunUrl(obj);
+    lunLink.href = lunUrl;
+    lunLink.textContent = `🔗 Відкрити пошук у LUN (${s_city.options[s_city.selectedIndex].text})`;
+
+    // show next
+    stage1.classList.add('hidden');
+    stageRange.classList.remove('hidden');
   });
 
-  // Модалка
-  card.addEventListener("click", () => {
-    openModal({
-      id: item.id,
-      name: item.name,
-      price: +item.price,
-      weight: item.weight,
-      image: "images/" + item.images
-    });
+  $('btnSkip').addEventListener('click', ()=> {
+    stage1.classList.add('hidden');
+    stageRange.classList.add('hidden');
+    showStageCalc();
   });
 
-  return card;
-}
-
-/* ========= Каталог ========= */
-function buildMenuNav(cats) {
-  const nav = document.getElementById("categoryNav"); nav.innerHTML = '';
-  cats.forEach(cat => {
-    const a = document.createElement("a"); a.href = "#" + cat.id; a.textContent = cat.name;
-    nav.appendChild(a);
-  });
-  navLinks = nav.querySelectorAll("a");
-}
-
-function buildCatalog(cats, items) {
-  const content = document.getElementById("content"); content.innerHTML = '';
-  document.getElementById("categoryNav").style.display = "block";
-  cats.forEach(cat => {
-    const sec = document.createElement("section"); sec.className = "section"; sec.id = cat.id;
-    sec.innerHTML = "<h2>" + cat.name + "</h2>";
-    items.filter(i => i.category === cat.id).forEach(item => {
-      sec.appendChild(renderCard(item));
-    });
-    content.appendChild(sec);
-  });
-  sections = document.querySelectorAll(".section");
-  observeSections();
-}
-
-function showMenu() { clearFixedBuy(); buildCatalog(menuData.categories, menuData.menu); }
-
-/* ========= Поиск ========= */
-const searchInput = document.getElementById("searchInput");
-searchInput.addEventListener("input", () => {
-  const query = searchInput.value.toLowerCase();
-  if (!query) { showMenu(); return; }
-  clearFixedBuy();
-  const content = document.getElementById("content");
-  content.innerHTML = '<h2 style="margin-top:70px">Результаты поиска</h2>';
-  document.getElementById("categoryNav").style.display = "none";
-  const matches = menuData.menu.filter(i => i.name.toLowerCase().includes(query));
-  if (!matches.length) { content.innerHTML += "<p>Ничего не найдено</p>"; return; }
-  matches.forEach(item => content.appendChild(renderCard(item)));
-});
-
-/* ========= Избранное ========= */
-function showFavorites() {
-  clearFixedBuy();
-  const content = document.getElementById("content");
-  content.classList.remove("content-left", "content-right");
-  content.innerHTML = '<h2 style="margin-top:70px">Избранное</h2>';
-  document.getElementById("categoryNav").style.display = "none";
-  const favItems = menuData.menu.filter(i => favorites.has(i.id));
-  if (!favItems.length) { content.innerHTML += "<p>Пусто</p>"; return; }
-  favItems.forEach(item => content.appendChild(renderCard(item)));
-  setTimeout(scrollTopNavToActive,150);
-}
-
-/* ========= Корзина ========= */
-function showCart() {
-  const content = document.getElementById("content");
-  content.classList.remove("content-left", "content-right");
-  content.innerHTML = '<h2 style="margin-top:70px">Корзина</h2>';
-  document.getElementById("categoryNav").style.display = "none";
-  clearFixedBuy();
-
-  if (!cart.length) { content.innerHTML += "<p>Пусто</p>"; return; }
-
-  let total = 0;
-  cart.forEach(item => {
-    total += item.price * item.quantity;
-    const div = document.createElement("div"); div.className = "w3-row basket w3-padding";
-    div.innerHTML = `
-      <div class="w3-col" style="width:50%">
-        <strong>${item.name}</strong><br>
-        <div class="w3-small w3-text-grey">${item.price} грн | ${item.weight}</div>
-        <strong>${item.price * item.quantity} грн</strong>
-      </div>
-      <div class="w3-col w3-padding w3-center" style="width:50%">
-        <img src="${item.image}" style="width:100%;max-width:200px;">
-        <div class="w3-padding">
-          <button class="w3-btn w3-round-xxlarge w3-black" onclick="decQty('${item.id}')">
-            ${item.quantity === 1 ? '<i class="fa fa-trash"></i>' : '-'}
-          </button>
-          <strong> ${item.quantity} </strong>
-          <button class="w3-btn w3-round-xxlarge w3-black" onclick="incQty('${item.id}')">+</button>
-        </div>
-    </div>`;
-    content.appendChild(div);
+  btnRangeBack.addEventListener('click', ()=> {
+    stageRange.classList.add('hidden');
+    stage1.classList.remove('hidden');
   });
 
-  const bar = document.createElement('div');
-  bar.className = 'fixed-buy';
-  bar.innerHTML = `
-    <p class="sum">Итого: ${total} грн</p>
-    <button class="w3-button w3-green w3-round-xxlarge" style="width:100%" onclick="openOrderForm(${total})">Купить</button>
-  `;
-  document.body.appendChild(bar);
-  setTimeout(scrollTopNavToActive,150);
-}
+  btnRangeNext.addEventListener('click', ()=> {
+    stageRange.classList.add('hidden');
+    showStageCalc();
+  });
 
-function clearFixedBuy() {
-  const old = document.querySelector('.fixed-buy'); if (old) old.remove();
-}
-function incQty(id) { const it = cart.find(i => i.id === id); if (it) { it.quantity++; saveState(); showCart(); updateCartCount(); } }
-function decQty(id) {
-  const i = cart.findIndex(it => it.id === id);
-  if (i > -1) { if (cart[i].quantity > 1) cart[i].quantity--; else cart.splice(i, 1); }
-  saveState(); showCart(); updateCartCount();
-}
+  /* ---------- showStageCalc: prefill objArea and render table ---------- */
+  function showStageCalc(){
+    stageCalc.classList.remove('hidden');
+    outputWrap.classList.add('hidden'); // hide result until calculated
+    if (s_area.value) objArea.value = s_area.value;
+    if (analogsData.length === 0) generateAnalogsData(5);
+    renderInputTable();
+  }
 
-/* ========= Модалка ========= */
-function openModal(p) {
-  currentProduct = p; quantity = 1;
-  document.getElementById("modalName").textContent = p.name;
-  document.getElementById("modalPrice").textContent = p.price + " грн";
-  document.getElementById("modalWeight").textContent = p.weight;
-  document.getElementById("modalImage").src = p.image;
-  document.getElementById("qtyValue").textContent = 1;
-  document.getElementById("totalPrice").textContent = p.price + " грн";
-  document.getElementById("productModal").style.display = "block";
-}
-function closeModal() { document.getElementById("productModal").style.display = "none"; }
-document.getElementById("qtyPlus").onclick = () => { quantity++; document.getElementById("qtyValue").textContent = quantity; updateTotal(); }
-document.getElementById("qtyMinus").onclick = () => { if (quantity > 1) { quantity--; document.getElementById("qtyValue").textContent = quantity; updateTotal(); } }
-function updateTotal() { document.getElementById("totalPrice").textContent = (currentProduct.price * quantity) + " грн"; }
-function addToCart() {
-  if (!currentProduct) return;
-  let ex = cart.find(i => i.id === currentProduct.id);
-  if (ex) ex.quantity += quantity; else cart.push({ ...currentProduct, quantity });
-  saveState(); updateCartCount(); closeModal();
-}
-window.onclick = e => {
-  if (e.target == document.getElementById("productModal")) closeModal();
-  if (e.target == document.getElementById("orderModal")) document.getElementById("orderModal").style.display = 'none';
-};
+  /* ---------- Analogs management ---------- */
+  function generateAnalogsData(n){
+    analogsData = [];
+    for (let i=0;i<n;i++){
+      analogsData.push({
+        id: i+1,
+        priceUSD: '',
+        area: '',
+        state: '10',
+        floor: 'middle',
+        url: ''
+      });
+    }
+  }
+  function addAnalog(){
+    const id = analogsData.length + 1;
+    analogsData.push({ id, priceUSD:'', area:'', state:'10', floor:'middle', url:'' });
+    renderInputTable();
+  }
 
-/* ========= Заказ ========= */
-function openOrderForm(total) {
-  document.getElementById('orderTotal').textContent = total;
-  document.getElementById('formTotal').value = total;
-  document.getElementById('formCart').value = JSON.stringify(cart);
-  document.getElementById('orderModal').style.display = 'block';
-}
+  /* ---------- Render input table (vertical) ---------- */
+  function renderInputTable(){
+    const cols = analogsData.length;
+    let html = '<table class="vert"><thead><tr><th>Параметр</th>';
+    for (let c=0;c<cols;c++) html += `<th>Аналог ${c+1}</th>`;
+    html += `<th class="th-add"><button id="btnAddHeader" class="add-btn" title="Додати аналог">+</button></th>`;
+    html += '</tr></thead><tbody>';
 
-/* ========= Навигация topNav ========= */
-document.querySelectorAll("#topNav a").forEach((a, idx) => {
-  a.onclick = e => {
-    e.preventDefault();
-    const dir = (idx + 1) > currentIndex ? "left" : "right";
-    activateTab(idx + 1, dir);
-  };
-});
-document.getElementById("searchIcon").onclick = () => activateTab(0, "right");
+    const rows = [
+      {key:'priceUSD', label:'Ціна (USD)'},
+      {key:'area', label:'Площа (м²)'},
+      {key:'state', label:'Стан'},
+      {key:'floor', label:'Поверх'},
+      {key:'url', label:'Посилання'}
+    ];
 
-/* ========= Подсветка нижнего меню ========= */
-function observeSections() {
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        navLinks.forEach(l => {
-          const active = l.getAttribute("href") === "#" + entry.target.id;
-          l.classList.toggle("active", active);
-          if (active) l.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-        });
+    const cellInput = (idx, field)=>{
+      const val = analogsData[idx][field] ?? '';
+      if (field === 'priceUSD' || field === 'area') {
+        return `<input data-idx="${idx}" data-field="${field}" class="inp-num" type="number" value="${val}">`;
       }
+      if (field === 'url') return `<input data-idx="${idx}" data-field="${field}" type="url" value="${val}">`;
+      if (field === 'state') {
+        return `<select data-idx="${idx}" data-field="state">
+          <option value="0"${val==='0'?' selected':''}>незадовільний</option>
+          <option value="5"${val==='5'?' selected':''}>задовільний</option>
+          <option value="10"${val==='10'?' selected':''}>добрий</option>
+          <option value="15"${val==='15'?' selected':''}>відмінний</option>
+        </select>`;
+      }
+      if (field === 'floor') {
+        return `<select data-idx="${idx}" data-field="floor">
+          <option value="first"${val==='first'?' selected':''}>перший</option>
+          <option value="middle"${val==='middle'?' selected':''}>середній</option>
+          <option value="last"${val==='last'?' selected':''}>останній</option>
+        </select>`;
+      }
+      return `<input data-idx="${idx}" data-field="${field}" value="${val}">`;
+    };
+
+    rows.forEach(r=>{
+      html += `<tr><td style="text-align:left;font-weight:600">${r.label}</td>`;
+      for (let c=0;c<cols;c++){
+        html += `<td>${cellInput(c, r.key)}</td>`;
+      }
+      html += `<td></td>`;
+      html += `</tr>`;
     });
-  }, { threshold: 0.5 });
-  sections.forEach(sec => observer.observe(sec));
-}
 
-/* ========= Init ========= */
-Promise.all([fetch("menu.json").then(r => r.json()), fetch("card.html").then(r => r.text())])
-.then(([data, tpl]) => {
-  menuData = data; cardTemplate = tpl; loadState();
-  buildMenuNav(data.categories); showMenu();
-  updateFavCount(); updateCartCount();
-});
+    html += `</tbody></table>`;
+    inputTableContainer.innerHTML = html;
+
+    // wire add button
+    const btnAddHeader = document.getElementById('btnAddHeader');
+    if (btnAddHeader) btnAddHeader.addEventListener('click', ()=> { addAnalog(); });
+
+    // wire inputs to state
+    Array.from(inputTableContainer.querySelectorAll('[data-idx]')).forEach(el=>{
+      el.addEventListener('input', (e)=>{
+        const idx = Number(el.getAttribute('data-idx'));
+        const field = el.getAttribute('data-field');
+        let v = el.value;
+        if (field === 'priceUSD' || field === 'area') v = v === '' ? '' : Number(v);
+        analogsData[idx][field] = v;
+      });
+    });
+  }
+
+  /* ---------- Core compute ---------- */
+  function computeAllForTorg(torgPercent) {
+    const oArea = Number(objArea.value) || 0;
+    const oStateVal = Number(objState.value) || 10;
+    const oFloorVal = objFloor.value || 'middle';
+
+    return analogsData.map(a => {
+      const price = Number(a.priceUSD) || 0;
+      const area = Number(a.area) || 0;
+      const state = a.state !== '' ? Number(a.state) : 10;
+      const floor = a.floor || 'middle';
+      const url = a.url || '';
+
+      const stateDerived = (oStateVal - state);
+      const areaPoints = Math.round((oArea - area) / 15);
+      const areaDerived = -areaPoints;
+      let floorDerived = 0;
+      if (oFloorVal === 'middle') {
+        if (floor === 'first' || floor === 'last') floorDerived = 5;
+      } else if (oFloorVal === 'first' || oFloorVal === 'last') {
+        if (floor === 'middle') floorDerived = -5;
+        else floorDerived = 0;
+      }
+
+      const id = a.id;
+      const manual = manualOverrides[id] || {};
+      const stateCorr = (typeof manual.stateCorr === 'number') ? manual.stateCorr : stateDerived;
+      const areaCorr  = (typeof manual.areaCorr === 'number') ? manual.areaCorr : areaDerived;
+      const floorCorr = (typeof manual.floorCorr === 'number') ? manual.floorCorr : floorDerived;
+
+      const totalCorrPercent = stateCorr + areaCorr + floorCorr + (torgPercent || 0);
+      const correctedPriceUSD = price * (1 + totalCorrPercent / 100);
+      const pricePerM2 = area > 0 ? correctedPriceUSD / area : 0;
+
+      return {
+        id, priceUSD: price, area, state, floor, url,
+        derived: { stateDerived, areaDerived, floorDerived },
+        manual: { stateCorr, areaCorr, floorCorr },
+        totalCorrPercent,
+        correctedPriceUSD,
+        pricePerM2
+      };
+    });
+  }
+
+  function chooseBestSubsetByPerM2(allArr, N, recommendedUAH, rate) {
+    if (!allArr || allArr.length === 0) return null;
+    const sortedAll = [...allArr].sort((a,b)=>a.pricePerM2 - b.pricePerM2);
+    if (sortedAll.length <= N) {
+      const droppedMin = sortedAll[0], droppedMax = sortedAll[sortedAll.length-1];
+      const remaining = sortedAll.slice(1, sortedAll.length-1);
+      const avgPerM2 = remaining.length ? remaining.reduce((s,r)=>s + r.pricePerM2,0)/remaining.length : (sortedAll.length ? sortedAll.reduce((s,r)=>s+r.pricePerM2,0)/sortedAll.length : 0);
+      return { subset: sortedAll.slice(0,N), avgPerM2, droppedMin, droppedMax, all: sortedAll };
+    }
+
+    let best = { subset: sortedAll.slice(0,N), diff: Infinity, avgPerM2: null, droppedMin:null, droppedMax:null };
+    for (let i=0; i <= sortedAll.length - N; i++) {
+      const window = sortedAll.slice(i, i+N);
+      const srt = [...window].sort((a,b)=>a.pricePerM2 - b.pricePerM2);
+      const droppedMin = srt[0], droppedMax = srt[srt.length-1];
+      const remaining = srt.slice(1, srt.length-1);
+      const avgPerM2 = remaining.length ? remaining.reduce((s,r)=>s + r.pricePerM2,0)/remaining.length : 0;
+      const estUSD = avgPerM2 * (Number(objArea.value) || 0);
+      const estUAH = (rate && rate>0) ? estUSD * rate : estUSD;
+      const diff = recommendedUAH ? Math.abs(estUAH - recommendedUAH) : 0;
+      if (diff < best.diff) {
+        best = { subset: window, diff, avgPerM2, droppedMin, droppedMax };
+      }
+    }
+    return best;
+  }
+
+  function autoPickTorgAndSubset() {
+    if (!recommended || !recommended.rate) return null;
+    const targetUAH = recommended.totalUAH;
+    const candidates = [0, -5, -10, -15, -20];
+    let bestOverall = { torg: 0, diff: Infinity, result: null };
+    for (const t of candidates) {
+      const all = computeAllForTorg(t);
+      const N = Number(analogsCount.value) || 5;
+      const candidate = chooseBestSubsetByPerM2(all, N, targetUAH, recommended.rate);
+      if (!candidate) continue;
+      const estUSD = candidate.avgPerM2 * (Number(objArea.value) || 0);
+      const estUAH = estUSD * recommended.rate;
+      const diff = Math.abs(estUAH - targetUAH);
+      if (diff < bestOverall.diff) {
+        bestOverall = { torg: t, diff, candidate, all, estUSD, estUAH };
+      }
+    }
+    return bestOverall;
+  }
+
+  /* ---------- Main calculate flow ---------- */
+  function calculateMain() {
+    const userTorgRaw = (torgInput.value || '').toString().trim();
+    let userTorg = null;
+    if (userTorgRaw !== '') userTorg = clamp(Number(userTorgRaw), -20, 0);
+
+    if (userTorg === null && recommended && recommended.rate) {
+      const best = autoPickTorgAndSubset();
+      if (best && best.candidate) {
+        autoAppliedTorg = best.torg;
+        renderResult(best.all, best.torg, best.candidate.subset, best.candidate.avgPerM2, best.candidate.droppedMin, best.candidate.droppedMax, best.estUSD, best.estUAH, recommended);
+        return;
+      }
+    }
+
+    const torgToUse = (userTorg !== null) ? userTorg : 0;
+    const all = computeAllForTorg(torgToUse);
+    const N = Number(analogsCount.value) || 5;
+    const candidate = chooseBestSubsetByPerM2(all, N, recommended ? recommended.totalUAH : null, recommended ? recommended.rate : null);
+
+    const estUSD = candidate ? candidate.avgPerM2 * (Number(objArea.value) || 0) : 0;
+    const estUAH = (recommended && recommended.rate) ? estUSD * recommended.rate : estUSD;
+
+    autoAppliedTorg = null;
+    renderResult(all, torgToUse, candidate ? candidate.subset : [], candidate ? candidate.avgPerM2 : 0, candidate ? candidate.droppedMin : null, candidate ? candidate.droppedMax : null, estUSD, estUAH, recommended);
+  }
+
+  /* ---------- Render result (vertical) ---------- */
+  function renderResult(allData, torgApplied, chosenSubset, avgPerM2, droppedMin, droppedMax, estUSD, estUAH, recommendObj) {
+    appliedTorgEl.textContent = (torgInput.value.trim()==='' && autoAppliedTorg!==null) ? `Поправка на торг (авто): ${autoAppliedTorg}%` : `Поправка на торг: ${torgApplied}%`;
+
+    const chosenIds = new Set((chosenSubset||[]).map(x => x.id));
+    let html = `<h3>Результат розрахунку</h3>`;
+    html += `<div class="muted-2">Зелений — обрані в підсумок; червоний — відкинуті мін/макс.</div>`;
+    html += `<div style="overflow:auto"><table class="vert"><thead><tr><th>Параметр</th>`;
+
+    const droppedMinId = droppedMin ? droppedMin.id : null;
+    const droppedMaxId = droppedMax ? droppedMax.id : null;
+
+    allData.forEach((a,i)=> html += `<th>Аналог ${i+1}${(droppedMinId===a.id) ? ' (відкинуто—мін)' : (droppedMaxId===a.id ? ' (відкинуто—макс)' : '')}</th>`);
+    html += `</tr></thead><tbody>`;
+
+    const params = [
+      {key:'priceUSD', label:'Базова ціна (USD)'},
+      {key:'area', label:'Площа (м²)'},
+      {key:'stateDerived', label:'Стан (п.п.) — derived'},
+      {key:'areaDerived', label:'Площа (п.п.) — derived'},
+      {key:'floorDerived', label:'Поверх (п.п.) — derived'},
+      {key:'stateCorr', label:'Поправка стан (вручну %)'},
+      {key:'areaCorr', label:'Поправка площа (вручну %)'},
+      {key:'floorCorr', label:'Поправка поверх (вручну %)'},
+      {key:'totalCorr', label:'Загальна корекція (%)'},
+      {key:'correctedPriceUSD', label:'Скоригована ціна (USD)'},
+      {key:'pricePerM2', label:'Ціна за м² (USD/m²)'},
+      {key:'url', label:'URL'},
+      {key:'chosen', label:'У підсумку?'}
+    ];
+
+    allData.forEach(a=> { a.pricePerM2 = a.pricePerM2 || 0; });
+
+    params.forEach(p=>{
+      html += `<tr><td style="text-align:left;font-weight:600">${p.label}</td>`;
+      allData.forEach(a=>{
+        if (p.key === 'priceUSD') html += `<td>${a.priceUSD ? toUSD(a.priceUSD) : '-'}</td>`;
+        else if (p.key === 'area') html += `<td>${a.area || '-'}</td>`;
+        else if (p.key === 'stateDerived') html += `<td>${a.derived ? a.derived.stateDerived : '-'}</td>`;
+        else if (p.key === 'areaDerived') html += `<td>${a.derived ? a.derived.areaDerived : '-'}</td>`;
+        else if (p.key === 'floorDerived') html += `<td>${a.derived ? a.derived.floorDerived : '-'}</td>`;
+        else if (p.key === 'stateCorr') {
+          const manualVal = manualOverrides[a.id] && typeof manualOverrides[a.id].stateCorr === 'number' ? manualOverrides[a.id].stateCorr : (a.manual ? a.manual.stateCorr : a.derived.stateDerived);
+          html += `<td><input class="editable-corr res-corr" data-id="${a.id}" data-field="stateCorr" type="number" value="${manualVal}"></td>`;
+        }
+        else if (p.key === 'areaCorr') {
+          const manualVal = manualOverrides[a.id] && typeof manualOverrides[a.id].areaCorr === 'number' ? manualOverrides[a.id].areaCorr : (a.manual ? a.manual.areaCorr : a.derived.areaDerived);
+          html += `<td><input class="editable-corr res-corr" data-id="${a.id}" data-field="areaCorr" type="number" value="${manualVal}"></td>`;
+        }
+        else if (p.key === 'floorCorr') {
+          const manualVal = manualOverrides[a.id] && typeof manualOverrides[a.id].floorCorr === 'number' ? manualOverrides[a.id].floorCorr : (a.manual ? a.manual.floorCorr : a.derived.floorDerived);
+          html += `<td><input class="editable-corr res-corr" data-id="${a.id}" data-field="floorCorr" type="number" value="${manualVal}"></td>`;
+        }
+        else if (p.key === 'totalCorr') html += `<td>${Math.round(a.totalCorrPercent || 0)}%</td>`;
+        else if (p.key === 'correctedPriceUSD') html += `<td>${a.correctedPriceUSD ? toUSD(a.correctedPriceUSD) : '-'}</td>`;
+        else if (p.key === 'pricePerM2') html += `<td>${a.pricePerM2 ? ('$' + (Math.round(a.pricePerM2*100)/100)) : '-'}</td>`;
+        else if (p.key === 'url') html += `<td>${a.url ? `<span class="url-ind" data-url="${encodeURIComponent(a.url)}">✅</span>` : ''}</td>`;
+        else if (p.key === 'chosen') html += `<td>${chosenIds.has ? (chosenIds.has(a.id) ? '✅' : '') : ''}</td>`;
+        else html += `<td>-</td>`;
+      });
+      html += `</tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+
+    // recommended & final results (simple)
+    if (recommendObj && recommendObj.rate) {
+      html += `<div style="margin-top:12px"><strong>Рекомендована повна ціна:</strong> ₴${Number(recommendObj.totalUAH).toLocaleString()} → ~${toUSD(Math.round(recommendObj.totalUAH / recommendObj.rate))} (курс ${recommendObj.rate})</div>`;
+    } else if (recommendObj && recommendObj.totalUAH) {
+      html += `<div style="margin-top:12px"><strong>Рекомендована повна ціна:</strong> ₴${Number(recommendObj.totalUAH).toLocaleString()}</div>`;
+    }
+
+    html += `<div style="margin-top:12px"><strong>Середня ціна за м² (USD):</strong> ${avgPerM2 ? ('$' + (Math.round(avgPerM2*100)/100)) : '-'}</div>`;
+    html += `<div style="margin-top:6px"><strong>Оціночна вартість об'єкта:</strong> ${toUSD(Math.round(estUSD || 0))}${(recommendObj && recommendObj.rate) ? ' / ' + toUAH(Math.round(estUSD || 0), recommendObj.rate) : ''}</div>`;
+
+    if (recommendObj && recommendObj.totalUAH) {
+      const diffUAH = Math.round((estUAH || 0) - recommendObj.totalUAH);
+      const sign = diffUAH >= 0 ? '+' : '';
+      html += `<div style="margin-top:6px" class="muted-2">Різниця з рекомендованою: ${sign}${diffUAH} ₴</div>`;
+    }
+    html += `<div style="margin-top:10px" class="muted-2">Поправка на торг (застосована): ${torgApplied}%</div>`;
+
+    output.innerHTML = html;
+    outputWrap.classList.remove('hidden');
+
+    // bind URL copy
+    Array.from(output.querySelectorAll('.url-ind')).forEach(el => {
+      el.addEventListener('click', async () => {
+        const url = decodeURIComponent(el.getAttribute('data-url') || '');
+        if (!url) return;
+        try { await navigator.clipboard.writeText(url); const old = el.textContent; el.textContent = 'Скопійовано'; setTimeout(()=> el.textContent = old,800); } catch(e){ window.prompt('Копіюйте посилання:', url); }
+      });
+    });
+
+    // bind editable correction inputs (recalculate on change)
+    Array.from(output.querySelectorAll('input.res-corr')).forEach(inp => {
+      inp.addEventListener('change', () => {
+        const id = Number(inp.getAttribute('data-id'));
+        const field = inp.getAttribute('data-field'); // stateCorr / areaCorr / floorCorr
+        const val = Number(inp.value) || 0;
+        if (!manualOverrides[id]) manualOverrides[id] = {};
+        manualOverrides[id][field] = val;
+        calculateMain();
+      });
+    });
+  }
+
+  /* ---------- Events ---------- */
+  // add header button guard (renderInputTable wires it as well)
+  if ($('btnAddHeader')) $('btnAddHeader').addEventListener('click', addAnalog);
+  if (btnCalc) btnCalc.addEventListener('click', ()=> calculateMain());
+
+  /* ---------- Back buttons ---------- */
+  if (btnCalcBack) btnCalcBack.addEventListener('click', ()=> {
+    stageCalc.classList.add('hidden');
+    stageRange.classList.remove('hidden');
+  });
+  if (btnOutputBack) btnOutputBack.addEventListener('click', ()=> {
+    outputWrap.classList.add('hidden');
+    stageCalc.classList.remove('hidden');
+  });
+
+  /* ---------- Init ---------- */
+  generateAnalogsData(5);
+  renderInputTable();
+}); // DOMContentLoaded
+
+
+
+  
 </script>
-
-
 </body>
 </html>
